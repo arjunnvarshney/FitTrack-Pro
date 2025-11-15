@@ -1,0 +1,1476 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FitTrack Pro - Fitness Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-primary: #f8fafc;
+            --bg-secondary: #ffffff;
+            --text-primary: #1e293b;
+            --text-secondary: #64748b;
+            --border: #e2e8f0;
+            --accent: #4f46e5;
+            --accent-hover: #4338ca;
+            --success: #10b981;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --info: #0ea5e9;
+        }
+
+        [data-theme="dark"] {
+            --bg-primary: #0f172a;
+            --bg-secondary: #1e293b;
+            --text-primary: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --border: #334155;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            transition: all 0.3s ease;
+        }
+
+        /* Layout */
+        .container {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 260px;
+            background: var(--bg-secondary);
+            border-right: 1px solid var(--border);
+            padding: 2rem 1rem;
+            transition: width 0.3s ease;
+        }
+
+        .sidebar.collapsed {
+            width: 80px;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 2rem;
+        }
+
+        .logo-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, var(--accent), var(--success));
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 1.25rem;
+            flex-shrink: 0;
+        }
+
+        .logo-text {
+            font-size: 1.25rem;
+            font-weight: 700;
+            white-space: nowrap;
+            overflow: hidden;
+            transition: opacity 0.3s;
+        }
+
+        .sidebar.collapsed .logo-text {
+            opacity: 0;
+            width: 0;
+        }
+
+        .nav {
+            margin-bottom: 2rem;
+        }
+
+        .nav-item {
+            padding: 0.75rem 1rem;
+            margin-bottom: 0.5rem;
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            color: var(--text-secondary);
+            transition: all 0.3s;
+        }
+
+        .nav-item:hover {
+            background: var(--bg-primary);
+            color: var(--text-primary);
+        }
+
+        .nav-item.active {
+            background: var(--accent);
+            color: white;
+        }
+
+        .nav-icon {
+            width: 20px;
+            height: 20px;
+            flex-shrink: 0;
+        }
+
+        .nav-text {
+            white-space: nowrap;
+            overflow: hidden;
+            transition: opacity 0.3s;
+        }
+
+        .sidebar.collapsed .nav-text {
+            opacity: 0;
+            width: 0;
+        }
+
+        .sidebar-footer {
+            margin-top: auto;
+            padding-top: 2rem;
+            border-top: 1px solid var(--border);
+        }
+
+        .btn-toggle, .btn-theme {
+            width: 100%;
+            padding: 0.75rem;
+            background: var(--bg-primary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+            transition: all 0.3s;
+        }
+
+        .btn-toggle:hover, .btn-theme:hover {
+            background: var(--accent);
+            color: white;
+            border-color: var(--accent);
+        }
+
+        /* Main Content */
+        .main {
+            flex: 1;
+            padding: 2rem;
+            overflow-y: auto;
+        }
+
+        .page {
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .page.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Header */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .header h1 {
+            font-size: 2rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .header-subtitle {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+        }
+
+        .live-clock {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--accent);
+        }
+
+        /* Cards */
+        .card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--accent), var(--success));
+        }
+
+        .stat-icon {
+            width: 60px;
+            height: 60px;
+            margin: 0 auto 1rem;
+            background: linear-gradient(135deg, var(--accent), var(--success));
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+        }
+
+        .stat-icon svg {
+            width: 28px;
+            height: 28px;
+        }
+
+        .stat-title {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            margin-bottom: 1rem;
+        }
+
+        /* Progress Circle */
+        .progress-circle {
+            position: relative;
+            width: 140px;
+            height: 140px;
+            margin: 1rem auto;
+        }
+
+        .progress-circle svg {
+            transform: rotate(-90deg);
+        }
+
+        .progress-circle circle {
+            fill: none;
+            stroke-width: 10;
+        }
+
+        .progress-bg {
+            stroke: var(--border);
+        }
+
+        .progress-fg {
+            stroke-linecap: round;
+            transition: stroke-dashoffset 1s ease;
+        }
+
+        .progress-text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+        }
+
+        .progress-value {
+            display: block;
+            font-size: 2rem;
+            font-weight: 700;
+            line-height: 1;
+        }
+
+        .progress-unit {
+            display: block;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            margin-top: 0.25rem;
+        }
+
+        .stat-goal {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        /* Quick Stats */
+        .quick-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .quick-stat {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .quick-stat-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            flex-shrink: 0;
+        }
+
+        .quick-stat-icon svg {
+            width: 24px;
+            height: 24px;
+        }
+
+        .quick-stat-info h4 {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            margin-bottom: 0.25rem;
+        }
+
+        .quick-stat-info p {
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+
+        /* Motivation Card */
+        .motivation-card {
+            background: linear-gradient(135deg, var(--accent), #7c3aed);
+            color: white;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .motivation-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -20%;
+            width: 200px;
+            height: 200px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 50%;
+        }
+
+        .motivation-card h3 {
+            font-size: 1.25rem;
+            margin-bottom: 0.5rem;
+            position: relative;
+        }
+
+        .motivation-card p {
+            font-size: 1rem;
+            opacity: 0.95;
+            position: relative;
+        }
+
+        /* Buttons */
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.3s;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .btn-primary {
+            background: var(--accent);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--accent-hover);
+        }
+
+        .btn-danger {
+            background: var(--danger);
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #dc2626;
+        }
+
+        /* Activity Page */
+        .filter-tabs {
+            display: flex;
+            gap: 0.5rem;
+            background: var(--bg-primary);
+            padding: 0.5rem;
+            border-radius: 10px;
+            margin-bottom: 1.5rem;
+        }
+
+        .filter-btn {
+            flex: 1;
+            padding: 0.75rem;
+            background: transparent;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+            color: var(--text-secondary);
+            transition: all 0.3s;
+        }
+
+        .filter-btn:hover {
+            color: var(--text-primary);
+        }
+
+        .filter-btn.active {
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .activity-list {
+            list-style: none;
+        }
+
+        .activity-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1.25rem 0;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .activity-item:last-child {
+            border-bottom: none;
+        }
+
+        .activity-name {
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+        }
+
+        .activity-time {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
+        .activity-stats {
+            text-align: right;
+        }
+
+        .activity-duration {
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+        }
+
+        .activity-calories {
+            color: var(--success);
+            font-weight: 600;
+        }
+
+        /* Form */
+        .form-grid {
+            display: grid;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            font-size: 0.9rem;
+        }
+
+        .form-input, .form-select {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            font-size: 1rem;
+            transition: all 0.3s;
+        }
+
+        .form-input:focus, .form-select:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+        }
+
+        /* Meal Planner */
+        .meal-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .meal-card {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .meal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 1rem;
+        }
+
+        .meal-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            text-transform: capitalize;
+        }
+
+        .meal-total {
+            color: var(--success);
+            font-weight: 700;
+        }
+
+        .meal-list {
+            list-style: none;
+            margin-bottom: 1rem;
+            flex: 1;
+        }
+
+        .meal-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem;
+            background: var(--bg-primary);
+            border-radius: 6px;
+            margin-bottom: 0.5rem;
+        }
+
+        .meal-item-name {
+            font-weight: 500;
+        }
+
+        .meal-item-calories {
+            color: var(--success);
+            font-weight: 600;
+            margin-right: 0.5rem;
+        }
+
+        .btn-remove {
+            background: none;
+            border: none;
+            color: var(--danger);
+            cursor: pointer;
+            padding: 0.25rem;
+            font-size: 1.25rem;
+            line-height: 1;
+        }
+
+        .add-meal-form {
+            display: flex;
+            gap: 0.5rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border);
+        }
+
+        .add-meal-form input {
+            flex: 1;
+        }
+
+        .add-meal-form .form-input:nth-child(2) {
+            width: 100px;
+        }
+
+        .total-calories-card {
+            text-align: center;
+        }
+
+        .total-calories-label {
+            font-size: 1rem;
+            color: var(--text-secondary);
+            margin-bottom: 0.5rem;
+        }
+
+        .total-calories-value {
+            font-size: 3rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--accent), var(--success));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        /* Insights */
+        .insights-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .chart-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+        }
+
+        .chart {
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-between;
+            height: 300px;
+            gap: 1rem;
+            padding: 1rem 0;
+        }
+
+        .bar-wrapper {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            height: 100%;
+            justify-content: flex-end;
+        }
+
+        .bar {
+            width: 100%;
+            background: linear-gradient(to top, var(--accent), var(--success));
+            border-radius: 6px 6px 0 0;
+            position: relative;
+            transition: all 0.5s ease;
+            min-height: 20px;
+        }
+
+        .bar:hover {
+            opacity: 0.8;
+            transform: translateY(-4px);
+        }
+
+        .bar-value {
+            position: absolute;
+            top: -25px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-weight: 700;
+            font-size: 0.9rem;
+            white-space: nowrap;
+        }
+
+        .bar-label {
+            margin-top: 0.5rem;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        .actions {
+            display: flex;
+            gap: 1rem;
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: var(--bg-secondary);
+            border-radius: 16px;
+            padding: 2rem;
+            max-width: 500px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 25px -5px rgba(0,0,0,0.3);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .modal-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: var(--text-secondary);
+            padding: 0;
+            line-height: 1;
+        }
+
+        .modal-body {
+            margin-bottom: 1.5rem;
+        }
+
+        .modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 0.5rem;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .sidebar {
+                position: fixed;
+                left: -260px;
+                top: 0;
+                height: 100vh;
+                z-index: 100;
+            }
+
+            .sidebar.active {
+                left: 0;
+            }
+
+            .main {
+                padding: 1rem;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .quick-stats {
+                grid-template-columns: 1fr;
+            }
+
+            .insights-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .meal-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body data-theme="light">
+    <div class="container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="logo">
+                <div class="logo-icon">FT</div>
+                <div class="logo-text">FitTrack Pro</div>
+            </div>
+
+            <nav class="nav">
+                <div class="nav-item active" data-page="dashboard">
+                    <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+                    </svg>
+                    <span class="nav-text">Dashboard</span>
+                </div>
+                <div class="nav-item" data-page="activity">
+                    <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                    </svg>
+                    <span class="nav-text">Activity Log</span>
+                </div>
+                <div class="nav-item" data-page="meals">
+                    <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+                    </svg>
+                    <span class="nav-text">Meal Planner</span>
+                </div>
+                <div class="nav-item" data-page="insights">
+                    <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                    </svg>
+                    <span class="nav-text">Insights</span>
+                </div>
+            </nav>
+
+            <div class="sidebar-footer">
+                <button class="btn-toggle" onclick="toggleSidebar()">
+                    <span>≡</span>
+                </button>
+                <button class="btn-theme" onclick="toggleTheme()">
+                    <svg id="theme-icon-sun" style="display: none; width: 20px; height: 20px;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 3v2.25m6.364.386l-1.591 1.591M21 12h-2.25m-.386 6.364l-1.591-1.591M12 18.75V21m-4.773-4.227l-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0z"/>
+                    </svg>
+                    <svg id="theme-icon-moon" style="width: 20px; height: 20px;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M21.752 15.002A9.718 9.718 0 0118 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 003 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 009.002-5.998z"/>
+                    </svg>
+                    <span class="nav-text">Theme</span>
+                </button>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main">
+            <!-- Page 1: Dashboard -->
+            <div class="page active" id="dashboard">
+                <div class="header">
+                    <div>
+                        <h1>Daily Wellness Overview</h1>
+                        <p class="header-subtitle" id="current-date"></p>
+                    </div>
+                    <div class="live-clock" id="live-clock"></div>
+                </div>
+
+                <div class="quick-stats">
+                    <div class="card quick-stat">
+                        <div class="quick-stat-icon" style="background: linear-gradient(135deg, #f59e0b, #ef4444);">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width: 24px; height: 24px;">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                            </svg>
+                        </div>
+                        <div class="quick-stat-info">
+                            <h4>Active Minutes</h4>
+                            <p>135</p>
+                        </div>
+                    </div>
+                    <div class="card quick-stat">
+                        <div class="quick-stat-icon" style="background: linear-gradient(135deg, #10b981, #059669);">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width: 24px; height: 24px;">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z"/>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.879 16.121A3 3 0 1012.015 11L11 14H9c0 .768.293 1.536.879 2.121z"/>
+                            </svg>
+                        </div>
+                        <div class="quick-stat-info">
+                            <h4>Streak Days</h4>
+                            <p>12</p>
+                        </div>
+                    </div>
+                    <div class="card quick-stat">
+                        <div class="quick-stat-icon" style="background: linear-gradient(135deg, #8b5cf6, #7c3aed);">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width: 24px; height: 24px;">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 10h4.764a2 2 0 011.789 2.894l-3.5 7A2 2 0 0115.263 21h-4.017c-.163 0-.326-.02-.485-.06L7 20m7-10V5a2 2 0 00-2-2h-.095c-.5 0-.905.405-.905.905 0 .714-.211 1.412-.608 2.006L7 11v9m7-10h-2M7 20H5a2 2 0 01-2-2v-6a2 2 0 012-2h2.5"/>
+                            </svg>
+                        </div>
+                        <div class="quick-stat-info">
+                            <h4>Workouts</h4>
+                            <p>3</p>
+                        </div>
+                    </div>
+                    <div class="card quick-stat">
+                        <div class="quick-stat-icon" style="background: linear-gradient(135deg, #06b6d4, #0284c7);">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width: 24px; height: 24px;">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                        </div>
+                        <div class="quick-stat-info">
+                            <h4>Sleep</h4>
+                            <p>7.5h</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="stats-grid">
+                    <div class="card stat-card" id="steps-card"></div>
+                    <div class="card stat-card" id="calories-card"></div>
+                    <div class="card stat-card" id="water-card"></div>
+                </div>
+
+                <div class="card motivation-card">
+                    <h3>Today's Motivation</h3>
+                    <p>"The only bad workout is the one that didn't happen. Keep pushing forward!"</p>
+                </div>
+            </div>
+
+            <!-- Page 2: Activity Log -->
+            <div class="page" id="activity">
+                <div class="header">
+                    <div>
+                        <h1>Activity Log</h1>
+                        <p class="header-subtitle">Track your daily activities</p>
+                    </div>
+                    <button class="btn btn-primary" onclick="openActivityModal()">
+                        <span>+</span> Add Activity
+                    </button>
+                </div>
+
+                <div class="filter-tabs">
+                    <button class="filter-btn active" data-filter="All">All</button>
+                    <button class="filter-btn" data-filter="Morning">Morning</button>
+                    <button class="filter-btn" data-filter="Afternoon">Afternoon</button>
+                    <button class="filter-btn" data-filter="Evening">Evening</button>
+                </div>
+
+                <div class="card">
+                    <ul class="activity-list" id="activity-list"></ul>
+                </div>
+            </div>
+
+            <!-- Page 3: Meal Planner -->
+            <div class="page" id="meals">
+                <div class="header">
+                    <div>
+                        <h1>Meal Planner</h1>
+                        <p class="header-subtitle">Plan your daily nutrition</p>
+                    </div>
+                </div>
+
+                <div class="card total-calories-card">
+                    <p class="total-calories-label">Total Daily Calories</p>
+                    <p class="total-calories-value" id="total-calories">0</p>
+                </div>
+
+                <div class="meal-grid" id="meal-grid"></div>
+            </div>
+
+            <!-- Page 4: Insights -->
+            <div class="page" id="insights">
+                <div class="header">
+                    <div>
+                        <h1>Insights & Summary</h1>
+                        <p class="header-subtitle">Your weekly progress</p>
+                    </div>
+                    <div class="actions">
+                        <button class="btn btn-primary" onclick="downloadSummary()">
+                            <span>↓</span> Download
+                        </button>
+                        <button class="btn btn-danger" onclick="resetDashboard()">
+                            <span>⟲</span> Reset
+                        </button>
+                    </div>
+                </div>
+
+                <div class="insights-grid">
+                    <div class="card">
+                        <h3 class="chart-title">Weekly Activities (minutes)</h3>
+                        <div class="chart" id="activity-chart"></div>
+                    </div>
+                    <div class="card">
+                        <h3 class="chart-title">Weekly Calories (kcal)</h3>
+                        <div class="chart" id="calories-chart"></div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Add Activity Modal -->
+    <div class="modal" id="activity-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Add New Activity</h2>
+                <button class="modal-close" onclick="closeModal('activity-modal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="activity-form">
+                    <div class="form-group">
+                        <label class="form-label">Activity Name</label>
+                        <input type="text" class="form-input" id="activity-name" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Duration (minutes)</label>
+                        <input type="number" class="form-input" id="activity-duration" min="1" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Calories Burned</label>
+                        <input type="number" class="form-input" id="activity-calories" min="1" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Time of Day</label>
+                        <select class="form-select" id="activity-time">
+                            <option>Morning</option>
+                            <option>Afternoon</option>
+                            <option>Evening</option>
+                        </select>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-primary" onclick="addActivity()">Add Activity</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Success Modal -->
+    <div class="modal" id="success-modal">
+        <div class="modal-content" style="text-align: center;">
+            <div class="modal-header">
+                <h2 class="modal-title">Success!</h2>
+                <button class="modal-close" onclick="closeModal('success-modal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p>Activity added successfully.</p>
+            </div>
+            <div class="modal-footer" style="justify-content: center;">
+                <button class="btn btn-primary" onclick="closeModal('success-modal')">OK</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Data
+        const fitnessData = {
+            steps: { current: 7534, goal: 10000 },
+            calories: { current: 1823, goal: 2500 },
+            water: { current: 6, goal: 8 }
+        };
+
+        const activities = [
+            { id: 1, name: 'Morning Run', duration: 30, calories: 350, time: 'Morning' },
+            { id: 2, name: 'Yoga Session', duration: 45, calories: 180, time: 'Morning' },
+            { id: 3, name: 'Cycling', duration: 60, calories: 450, time: 'Afternoon' },
+            { id: 4, name: 'Weight Training', duration: 50, calories: 320, time: 'Evening' },
+            { id: 5, name: 'Swimming', duration: 40, calories: 400, time: 'Evening' }
+        ];
+
+        const meals = {
+            breakfast: [
+                { id: 1, name: 'Oatmeal with Berries', calories: 320 },
+                { id: 2, name: 'Greek Yogurt', calories: 150 },
+                { id: 3, name: 'Banana', calories: 105 }
+            ],
+            lunch: [
+                { id: 4, name: 'Grilled Chicken Salad', calories: 420 },
+                { id: 5, name: 'Brown Rice', calories: 215 },
+                { id: 6, name: 'Steamed Vegetables', calories: 85 }
+            ],
+            dinner: [
+                { id: 7, name: 'Salmon Fillet', calories: 367 },
+                { id: 8, name: 'Quinoa', calories: 222 },
+                { id: 9, name: 'Roasted Broccoli', calories: 55 }
+            ]
+        };
+
+        const weeklyActivity = [
+            { day: 'Mon', value: 45 },
+            { day: 'Tue', value: 60 },
+            { day: 'Wed', value: 38 },
+            { day: 'Thu', value: 72 },
+            { day: 'Fri', value: 55 },
+            { day: 'Sat', value: 48 },
+            { day: 'Sun', value: 65 }
+        ];
+
+        const weeklyCalories = [
+            { day: 'Mon', value: 1800 },
+            { day: 'Tue', value: 2100 },
+            { day: 'Wed', value: 1650 },
+            { day: 'Thu', value: 2400 },
+            { day: 'Fri', value: 2000 },
+            { day: 'Sat', value: 1900 },
+            { day: 'Sun', value: 2200 }
+        ];
+
+        let currentFilter = 'All';
+
+        // Load from storage
+        function loadState() {
+            const saved = sessionStorage.getItem('fitnessData');
+            if (saved) {
+                const data = JSON.parse(saved);
+                Object.assign(fitnessData, data.fitnessData);
+                activities.length = 0;
+                activities.push(...data.activities);
+                Object.assign(meals, data.meals);
+            }
+        }
+
+        // Save to storage
+        function saveState() {
+            sessionStorage.setItem('fitnessData', JSON.stringify({
+                fitnessData,
+                activities,
+                meals
+            }));
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            loadState();
+            initDashboard();
+            initNavigation();
+            initActivityLog();
+            initMealPlanner();
+            initInsights();
+            updateClock();
+            setInterval(updateClock, 1000);
+        });
+
+        // Navigation
+        function initNavigation() {
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.addEventListener('click', () => {
+                    const page = item.dataset.page;
+                    document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+                    item.classList.add('active');
+                    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+                    document.getElementById(page).classList.add('active');
+                });
+            });
+        }
+
+        // Theme Toggle
+        function toggleTheme() {
+            const html = document.documentElement;
+            const currentTheme = html.getAttribute('data-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            html.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+            
+            const sunIcon = document.getElementById('theme-icon-sun');
+            const moonIcon = document.getElementById('theme-icon-moon');
+            
+            if (newTheme === 'dark') {
+                sunIcon.style.display = 'block';
+                moonIcon.style.display = 'none';
+            } else {
+                sunIcon.style.display = 'none';
+                moonIcon.style.display = 'block';
+            }
+        }
+
+        // Load saved theme
+        const savedTheme = localStorage.getItem('theme') || 'light';
+        document.documentElement.setAttribute('data-theme', savedTheme);
+        if (savedTheme === 'dark') {
+            document.getElementById('theme-icon-sun').style.display = 'block';
+            document.getElementById('theme-icon-moon').style.display = 'none';
+        }
+
+        // Sidebar Toggle
+        function toggleSidebar() {
+            document.querySelector('.sidebar').classList.toggle('collapsed');
+        }
+
+        // Clock
+        function updateClock() {
+            const now = new Date();
+            const timeString = now.toLocaleTimeString('en-US', { 
+                hour: '2-digit', 
+                minute: '2-digit',
+                hour12: false 
+            });
+            const dateString = now.toLocaleDateString('en-US', { 
+                weekday: 'long', 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric' 
+            });
+            
+            document.getElementById('live-clock').textContent = timeString;
+            document.getElementById('current-date').textContent = dateString;
+        }
+
+        // Dashboard
+        function initDashboard() {
+            renderStatCard('steps', 'Steps', fitnessData.steps, '', '#4f46e5', 
+                `<svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                </svg>`
+            );
+            
+            renderStatCard('calories', 'Calories Burned', fitnessData.calories, 'kcal', '#10b981',
+                `<svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.879 16.121A3 3 0 1012.015 11L11 14H9c0 .768.293 1.536.879 2.121z"/>
+                </svg>`
+            );
+            
+            renderStatCard('water', 'Water Intake', fitnessData.water, 'glasses', '#0ea5e9',
+                `<svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"/>
+                </svg>`
+            );
+        }
+
+        function renderStatCard(id, title, data, unit, color, iconSvg) {
+            const percentage = Math.min((data.current / data.goal) * 100, 100);
+            const radius = 60;
+            const circumference = 2 * Math.PI * radius;
+            const offset = circumference - (percentage / 100) * circumference;
+
+            document.getElementById(`${id}-card`).innerHTML = `
+                <div class="stat-icon">${iconSvg}</div>
+                <div class="stat-title">${title}</div>
+                <div class="progress-circle">
+                    <svg width="140" height="140">
+                        <circle class="progress-bg" cx="70" cy="70" r="${radius}" stroke-width="10" fill="none"/>
+                        <circle class="progress-fg" cx="70" cy="70" r="${radius}" 
+                            stroke="${color}" stroke-width="10" fill="none"
+                            stroke-dasharray="${circumference}"
+                            stroke-dashoffset="${offset}"/>
+                    </svg>
+                    <div class="progress-text">
+                        <span class="progress-value">${data.current}</span>
+                        <span class="progress-unit">${unit}</span>
+                    </div>
+                </div>
+                <div class="stat-goal">Goal: ${data.goal} ${unit}</div>
+            `;
+        }
+
+        // Activity Log
+        function initActivityLog() {
+            renderActivities();
+            
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    currentFilter = btn.dataset.filter;
+                    renderActivities();
+                });
+            });
+        }
+
+        function renderActivities() {
+            const filtered = currentFilter === 'All' 
+                ? activities 
+                : activities.filter(a => a.time === currentFilter);
+            
+            const list = document.getElementById('activity-list');
+            
+            if (filtered.length === 0) {
+                list.innerHTML = '<li style="text-align: center; padding: 3rem; color: var(--text-secondary);">No activities found.</li>';
+                return;
+            }
+            
+            list.innerHTML = filtered.map(activity => `
+                <li class="activity-item">
+                    <div>
+                        <div class="activity-name">${activity.name}</div>
+                        <div class="activity-time">${activity.time}</div>
+                    </div>
+                    <div class="activity-stats">
+                        <div class="activity-duration">${activity.duration} mins</div>
+                        <div class="activity-calories">${activity.calories} kcal</div>
+                    </div>
+                </li>
+            `).join('');
+        }
+
+        function openActivityModal() {
+            document.getElementById('activity-modal').classList.add('active');
+        }
+
+        function closeModal(id) {
+            document.getElementById(id).classList.remove('active');
+        }
+
+        function addActivity() {
+            const name = document.getElementById('activity-name').value;
+            const duration = parseInt(document.getElementById('activity-duration').value);
+            const calories = parseInt(document.getElementById('activity-calories').value);
+            const time = document.getElementById('activity-time').value;
+
+            if (!name || !duration || !calories) {
+                alert('Please fill in all fields');
+                return;
+            }
+
+            activities.unshift({
+                id: Date.now(),
+                name,
+                duration,
+                calories,
+                time
+            });
+
+            fitnessData.calories.current += calories;
+            saveState();
+            renderActivities();
+            initDashboard();
+            
+            document.getElementById('activity-form').reset();
+            closeModal('activity-modal');
+            document.getElementById('success-modal').classList.add('active');
+        }
+
+        // Meal Planner
+        function initMealPlanner() {
+            renderMeals();
+        }
+
+        function renderMeals() {
+            const grid = document.getElementById('meal-grid');
+            
+            grid.innerHTML = Object.entries(meals).map(([type, items]) => {
+                const total = items.reduce((sum, item) => sum + item.calories, 0);
+                
+                return `
+                    <div class="card meal-card">
+                        <div class="meal-header">
+                            <h3 class="meal-title">${type}</h3>
+                            <span class="meal-total">${total} kcal</span>
+                        </div>
+                        <ul class="meal-list">
+                            ${items.map(item => `
+                                <li class="meal-item">
+                                    <div>
+                                        <div class="meal-item-name">${item.name}</div>
+                                    </div>
+                                    <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                        <span class="meal-item-calories">${item.calories} kcal</span>
+                                        <button class="btn-remove" onclick="removeMeal('${type}', ${item.id})">&times;</button>
+                                    </div>
+                                </li>
+                            `).join('')}
+                        </ul>
+                        <form class="add-meal-form" onsubmit="addMeal(event, '${type}')">
+                            <input type="text" class="form-input" placeholder="Item name" required>
+                            <input type="number" class="form-input" placeholder="Calories" min="1" required>
+                            <button type="submit" class="btn btn-primary">+</button>
+                        </form>
+                    </div>
+                `;
+            }).join('');
+
+            updateTotalCalories();
+        }
+
+        function addMeal(event, type) {
+            event.preventDefault();
+            const form = event.target;
+            const name = form[0].value;
+            const calories = parseInt(form[1].value);
+
+            meals[type].push({
+                id: Date.now(),
+                name,
+                calories
+            });
+
+            saveState();
+            renderMeals();
+            form.reset();
+        }
+
+        function removeMeal(type, id) {
+            meals[type] = meals[type].filter(item => item.id !== id);
+            saveState();
+            renderMeals();
+        }
+
+        function updateTotalCalories() {
+            const total = Object.values(meals)
+                .flat()
+                .reduce((sum, item) => sum + item.calories, 0);
+            
+            document.getElementById('total-calories').textContent = `${total} kcal`;
+        }
+
+        // Insights
+        function initInsights() {
+            renderChart('activity-chart', weeklyActivity);
+            renderChart('calories-chart', weeklyCalories);
+        }
+
+        function renderChart(id, data) {
+            const maxValue = Math.max(...data.map(d => d.value));
+            const chart = document.getElementById(id);
+            
+            chart.innerHTML = data.map(item => {
+                const height = (item.value / maxValue) * 100;
+                return `
+                    <div class="bar-wrapper">
+                        <div class="bar" style="height: ${height}%;">
+                            <span class="bar-value">${item.value}</span>
+                        </div>
+                        <div class="bar-label">${item.day}</div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Download Summary
+        function downloadSummary() {
+            const summary = `FitTrack Pro - Fitness Summary
+Generated: ${new Date().toLocaleString()}
+
+DAILY WELLNESS
+Steps: ${fitnessData.steps.current} / ${fitnessData.steps.goal}
+Calories Burned: ${fitnessData.calories.current} / ${fitnessData.calories.goal} kcal
+Water: ${fitnessData.water.current} / ${fitnessData.water.goal} glasses
+
+ACTIVITIES (${activities.length} total)
+${activities.map(a => `- ${a.name}: ${a.duration} min, ${a.calories} kcal (${a.time})`).join('\n')}
+
+MEALS
+${Object.entries(meals).map(([type, items]) => 
+    `${type.toUpperCase()}: ${items.map(m => `${m.name} (${m.calories} kcal)`).join(', ')}`
+).join('\n')}
+
+Total Daily Calories: ${Object.values(meals).flat().reduce((sum, item) => sum + item.calories, 0)} kcal`;
+
+            const blob = new Blob([summary], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `fittrack-summary-${Date.now()}.txt`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        // Reset Dashboard
+        function resetDashboard() {
+            if (confirm('Are you sure you want to reset all data? This cannot be undone.')) {
+                sessionStorage.clear();
+                location.reload();
+            }
+        }
+
+        // Close modal on outside click
+        document.querySelectorAll('.modal').forEach(modal => {
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    modal.classList.remove('active');
+                }
+            });
+        });
+    </script>
+</body>
+</html>
+                
